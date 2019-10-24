@@ -79,8 +79,8 @@ echo "#### Starting Vault..."
 
 ./vault server -config=cf.hcl &
 
+export VAULT_ADDR='http://127.0.0.1:8080'
 if [ "$VAULT_UNSEAL_KEY1" != "" ];then
-	export VAULT_ADDR='http://127.0.0.1:8080'
   while wget -O - $VAULT_ADDR/v1/sys/health 2>&1 | grep "Connection refused" 
   do
     echo "#### Waiting for vault to start..."
@@ -96,4 +96,14 @@ if [ "$VAULT_UNSEAL_KEY1" != "" ];then
 	if [ "$VAULT_UNSEAL_KEY3" != "" ];then
 		./vault operator unseal $VAULT_UNSEAL_KEY3
 	fi
+fi
+
+if [ "$VAULT_ENABLE_AUDIT_STDOUT" != "" ];then
+  ./vault status 2>&1 1>/dev/null
+  if [ $? -ne 0 ]; then
+    	echo "#### Vault is sealed. Cannot enable Audit backend."
+  else
+    ./vault audit enable file file_path=stdout
+    echo "#### Audit Backend enabled for Vault."
+  fi  
 fi
